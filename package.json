@@ -1,0 +1,29 @@
+{
+  "name": "dotazniky",
+  "version": "1.0.0",
+  "description": "fastest questionnaire",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kerzo1x/dotazniky.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/kerzo1x/dotazniky/issues"
+  },
+  "homepage": "https://github.com/kerzo1x/dotazniky#readme",
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "postgres": "^3.4.8"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.11",
+    "drizzle-kit": "^0.31.10"
+  }
+}
