@@ -15,6 +15,13 @@
       "when": 1774605589053,
       "tag": "0001_dazzling_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774893678691,
+      "tag": "0002_demonic_the_hunter",
+      "breakpoints": true
     }
   ]
 }
