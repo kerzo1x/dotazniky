@@ -1,56 +1,64 @@
 import { eq } from "drizzle-orm";
 import {db, usersTable} from "../db"
+import { randomBytes } from "node:crypto"
+import { isMarkedAsUntransferable } from "node:worker_threads";
+import z from "zod";
+import { error } from "node:console";
 
-// async function main() {
-//   const user: typeof usersTable.$inferInsert = {
-//     name: 'John',
-//     age: 30,
-//     email: 'john@example.com',
-//   };
-
-//   await db.insert(usersTable).values(user);
-//   console.log('New user created!')
-
-//   const users = await db.select().from(usersTable);
-//   console.log('Getting all users from the database: ', users)
-//   /*
-//   const users: {
-//     id: number;
-//     name: string;
-//     age: number;
-//     email: string;
-//   }[]
-//   */
-
-//   await db
-//     .update(usersTable)
-//     .set({
-//       age: 31,
-//     })
-//     .where(eq(usersTable.email, user.email));
-//   console.log('User info updated!')
-
-//   await db.delete(usersTable).where(eq(usersTable.email, user.email));
-//   console.log('User deleted!')
-// }
-
-// main();
-
-
-
-export const authorisation = {
+const registerSchema = z.object({
+  username: z.string().min(3, "Username is too short").max(20, "Username is too long"),
+  password: z.string().min(6, "Password is too short").max(256, "Password is to long")
+})
+export const authorization = {
   registerPost: async (req: Request) => {
-    const body = await req.json()
+    try{
+      const body = await req.json()
+
+      const validation = registerSchema.safeParse(body)
+      if (!validation.success) {
+        return Response.json({
+          status: "error",
+          errors: z.treeifyError(validation.error)
+        }, {status: 400})
+      }
+    
+
+    const { username, password } = validation.data;
+    const [user] = await db 
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.username, username))
+    .limit(1)
+
+    if (user) {
+      return Response.json({status: "error", message: "This user already exists"})
+    }
+
+    const token = randomBytes(32).toString('hex');
+    
     const [newUser] = await db
     .insert(usersTable)
     .values({
-      username: body.username, 
-      password: body.password
+      username: username, 
+      password: password,
+      token: token
     })
-    .returning()
+    .returning({
+      id: usersTable.id,
+      username: usersTable.username,
+      token: usersTable.token
 
-    const {password, updatedAt, ...response} = newUser
-    return Response.json(response)
+    })
+
+    // const {password, updatedAt, ...response} = newUser
+    return Response.json(newUser)
+  } catch (error){
+    console.error("Fatal error due registration process");
+    return Response.json({
+      status: "error",
+      message: "something went wrong on our side"
+    }, {status: 500})
+  }
   },
   testPost: async (req: Request) => {
     return Response.json({success: "that was post method"})
