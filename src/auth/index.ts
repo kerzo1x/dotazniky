@@ -35,23 +35,41 @@ export const authorization = {
     }
 
     const token = randomBytes(32).toString('hex');
-    
-    const [newUser] = await db
-    .insert(usersTable)
-    .values({
-      username: username, 
-      password: password,
-      token: token
+    const hashedToken = await Bun.password.hash(password, {
+      algorithm: "argon2id",
+      memoryCost: 65536,
+      timeCost: 2
     })
-    .returning({
-      id: usersTable.id,
-      username: usersTable.username,
-      token: usersTable.token
-
+    const hashedPassword = await Bun.password.hash(password, {
+      algorithm: "argon2id",
+      memoryCost: 65536,
+      timeCost: 2
     })
+    try {
+      const [newUser] = await db
+      .insert(usersTable)
+      .values({
+        username: username, 
+        password: hashedPassword,
+        token: hashedToken
+      })
+      .returning({
+        id: usersTable.id,
+        username: usersTable.username,
+        token: usersTable.token
+        
+      })
+      return Response.json(newUser)
+    } catch (dbError: any) {
+      if (dbError.code === "23505") {
+        return Response.json({
+          status: "error",
+          message: "This username is already taken. Choose the another one"
+        }, {status: 409}) //database duplicate conflict status
+      }
+    }
 
     // const {password, updatedAt, ...response} = newUser
-    return Response.json(newUser)
   } catch (error){
     console.error("Fatal error due registration process");
     return Response.json({
